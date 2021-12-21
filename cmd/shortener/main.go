@@ -12,6 +12,6 @@ func main() {
 	config := app.Config{Address: address}
 	db := app.New()
 
-	application := app.App{Config: &config, Db: db}
+	application := app.App{Config: &config, DB: db}
 	application.Start()
 }

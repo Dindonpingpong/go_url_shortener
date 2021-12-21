@@ -14,37 +14,37 @@ type Config struct {
 	Address string
 }
 
-type ShortedUrl string
+type ShortedURL string
 
-type Url string
+type URL string
 
-type Db struct {
-	Storage map[ShortedUrl]Url
+type DB struct {
+	Storage map[ShortedURL]URL
 }
 
-func New() *Db {
-	db := &Db{Storage: make(map[ShortedUrl]Url)}
+func New() *DB {
+	DB := &DB{Storage: make(map[ShortedURL]URL)}
 
-	return db
+	return DB
 }
 
-func (db *Db) SaveShortedUrl(sUrl ShortedUrl, url Url) {
-	db.Storage[sUrl] = url
+func (DB *DB) SaveShortedURL(sURL ShortedURL, URL URL) {
+	DB.Storage[sURL] = URL
 }
 
-func (db *Db) GetUrl(sUrl ShortedUrl) (Url, error) {
-	url, ok := db.Storage[sUrl]
+func (DB *DB) GetURL(sURL ShortedURL) (URL, error) {
+	URL, ok := DB.Storage[sURL]
 
 	if !ok {
-		return "", fmt.Errorf("Url not found")
+		return "", fmt.Errorf("URL not found")
 	}
 
-	return url, nil
+	return URL, nil
 }
 
 type App struct {
 	Config *Config
-	Db *Db
+	DB *DB
 }
 
 
@@ -59,41 +59,41 @@ func (a *App) root(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 		case http.MethodGet:
 
-			sUrl := ShortedUrl(path.Base(r.URL.Path))
+			sURL := ShortedURL(path.Base(r.URL.Path))
 
-			url, error := a.Db.GetUrl(sUrl)
+			URL, error := a.DB.GetURL(sURL)
 
 			if error != nil {
 				http.Error(w, error.Error(), http.StatusNotFound)
 				return
 			}
 
-			w.Header().Set("Location", string(url))
+			w.Header().Set("Location", string(URL))
 
 			w.WriteHeader(http.StatusTemporaryRedirect)
 		case http.MethodPost:
 			b, _ := ioutil.ReadAll(r.Body)
-			url := Url(string(b))
-			sUrl := generateShortUrl(url)
+			URL := URL(string(b))
+			sURL := generateShortURL(URL)
 
-			a.Db.SaveShortedUrl(sUrl, url)
+			a.DB.SaveShortedURL(sURL, URL)
 
 			w.WriteHeader(http.StatusCreated)
 			
-			fmt.Fprintf(w, "http://%s/%s", r.Host, sUrl)
+			fmt.Fprintf(w, "http://%s/%s", r.Host, sURL)
 		default:
 			http.Error(w, "Only GET and POST requests are allowed!", http.StatusMethodNotAllowed)
 	}
 }
 
-func generateShortUrl(url Url) ShortedUrl {
+func generateShortURL(URL URL) ShortedURL {
 	h := md5.New()
 
-	h.Write([]byte(url))
+	h.Write([]byte(URL))
 
 	sum := hex.EncodeToString(h.Sum(nil))	
 
-	sUrl := ShortedUrl(sum)
+	sURL := ShortedURL(sum)
 
-	return sUrl
+	return sURL
 }
