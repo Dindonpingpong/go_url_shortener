@@ -25,16 +25,16 @@ func NewShortenerService(st storage.URLStorer) (*Shortener, error) {
 	return &Shortener{st}, nil
 }
 
-func (s *Shortener) SaveURL(ctx context.Context, rawUrl string) (id string, err error) {
-	_, err = url.ParseRequestURI(rawUrl)
+func (s *Shortener) SaveURL(ctx context.Context, rawURL string) (id string, err error) {
+	_, err = url.ParseRequestURI(rawURL)
 
 	if err != nil {
 		return "", fmt.Errorf("incorrect url")
 	}
 
-	id = generateShortURL(rawUrl)
+	id = generateShortURL(rawURL)
 
-	err = s.urlStorer.SaveShortedURL(ctx, rawUrl, id)
+	err = s.urlStorer.SaveShortedURL(ctx, rawURL, id)
 
 	if err != nil {
 		return "", err

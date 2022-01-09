@@ -12,6 +12,7 @@ import (
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/inmemory"
 	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -22,10 +23,10 @@ type URLHandlerTestSuite struct {
 	urlHandler       *URLHandler
 }
 
-func (t *URLHandlerTestSuite) SetupTest() {
-	t.storage = inmemory.NewStorage()
-	t.shortenerService, _ = shortener.NewShortenerService(t.storage)
-	t.urlHandler, _ = NewURLHandler(t.shortenerService)
+func (s *URLHandlerTestSuite) SetupTest() {
+	s.storage = inmemory.NewStorage()
+	s.shortenerService, _ = shortener.NewShortenerService(s.storage)
+	s.urlHandler, _ = NewURLHandler(s.shortenerService)
 }
 
 func TestURLHandlerTestSuite(t *testing.T) {
@@ -83,15 +84,13 @@ func (s *URLHandlerTestSuite) TestGetURL() {
 			}
 
 			res, err := client.Do(req)
-
 			if err != nil {
 				t.Errorf(err.Error())
 			} else {
-				if res.StatusCode != tt.want.code {
-					t.Errorf("Expected status code %d, got %d", tt.want.code, res.StatusCode)
-				}
+				assert.Equal(t, tt.want.code, res.StatusCode)
 			}
 
+			defer res.Body.Close()
 		})
 	}
 }
@@ -106,27 +105,27 @@ func (s *URLHandlerTestSuite) TestPostURL() {
 	}
 
 	tests := []struct {
-		name  string
-		url string
-		want  want
+		name string
+		url  string
+		want want
 	}{
 		{
-			name:  "Correct url",
-			url: "http://yandex.com",
+			name: "Correct url",
+			url:  "http://yandex.com",
 			want: want{
 				code: 201,
 			},
 		},
 		{
-			name:  "Invalid url",
-			url: "",
+			name: "Invalid url",
+			url:  "",
 			want: want{
 				code: 400,
 			},
 		},
 		{
-			name:  "Invalid url",
-			url: "261341",
+			name: "Invalid url",
+			url:  "261341",
 			want: want{
 				code: 400,
 			},
@@ -156,10 +155,10 @@ func (s *URLHandlerTestSuite) TestPostURL() {
 			if err != nil {
 				t.Errorf(err.Error())
 			} else {
-				if res.StatusCode != tt.want.code {
-					t.Errorf("Expected status code %d, got %d", tt.want.code, res.StatusCode)
-				}
+				assert.Equal(t, tt.want.code, res.StatusCode)
 			}
+
+			defer res.Body.Close()
 		})
 	}
 }
