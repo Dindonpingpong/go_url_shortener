@@ -1,17 +1,20 @@
 package main
 
 import (
-	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/internal/app"
-)
+	"context"
+	"log"
 
-const(
-	address = ":8080"
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest"
 )
 
 func main() {
-	config := app.Config{Address: address}
-	db := app.New()
+	ctx := context.Background()
 
-	application := app.App{Config: &config, DB: db}
-	application.Start()
+	server, err := rest.InitServer(ctx)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Fatal(server.ListenAndServe())
 }
