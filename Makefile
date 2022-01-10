@@ -1,5 +1,6 @@
 .PHONY: build
 build:
-		go build -v ./cmd/shortener
-
+		go build -o ./cmd/shortener ./cmd/shortener
+test:
+		go test ./...
 .DEFAULT_GOAL: build

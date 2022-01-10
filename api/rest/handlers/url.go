@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	shortenerService "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener"
 	"github.com/go-chi/chi"
@@ -57,6 +58,13 @@ func (h *URLHandler) HandlePostURL() http.HandlerFunc {
 		}
 
 		rw.WriteHeader(http.StatusCreated)
-		rw.Write([]byte("http://" + r.Host + "/" + id))
+
+		u := &url.URL{
+			Scheme: "http",
+			Host: r.Host,
+			Path: id,
+		}
+
+		rw.Write([]byte(u.String()))
 	}
 }
