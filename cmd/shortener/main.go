@@ -11,6 +11,7 @@ import (
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/inmemory"
 )
 
 func main() {
@@ -18,7 +19,9 @@ func main() {
 
 	cfg := config.NewDefaultConfiguration()
 
-	server, err := rest.InitServer(ctx, cfg)
+	storage := inmemory.NewStorage()
+	
+	server, err := rest.InitServer(ctx, cfg, storage)
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
