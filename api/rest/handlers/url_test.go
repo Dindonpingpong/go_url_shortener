@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/model"
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
 	shortenerService "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener/v1"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
@@ -29,7 +30,8 @@ type URLHandlerTestSuite struct {
 func (s *URLHandlerTestSuite) SetupTest() {
 	s.storage = inmemory.NewStorage()
 	s.shortenerService, _ = shortener.NewShortenerService(s.storage)
-	s.urlHandler, _ = NewURLHandler(s.shortenerService)
+	cfg, _ := config.NewDefaultConfiguration()
+	s.urlHandler, _ = NewURLHandler(s.shortenerService, cfg.ServerConfig)
 }
 
 func TestURLHandlerTestSuite(t *testing.T) {

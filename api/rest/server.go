@@ -18,7 +18,7 @@ func InitServer(ctx context.Context, cfg *config.Config, st storage.URLStorer) (
 		return nil, err
 	}
 
-	urlHandler, err := handlers.NewURLHandler(shortenerService)
+	urlHandler, err := handlers.NewURLHandler(shortenerService, cfg.ServerConfig)
 
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func InitServer(ctx context.Context, cfg *config.Config, st storage.URLStorer) (
 	r.Post("/", urlHandler.HandlePostURL())
 
 	return &http.Server{
-		Addr: cfg.Port,
+		Addr: cfg.ServerConfig.ServerAddress,
 		Handler: r,
 	}, nil
 }

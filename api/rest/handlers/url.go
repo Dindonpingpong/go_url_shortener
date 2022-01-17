@@ -9,21 +9,23 @@ import (
 	"net/url"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/model"
-	shortenerService "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener"
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
 	sertviceErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/errors"
+	shortenerService "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener"
 	"github.com/go-chi/chi"
 )
 
 type URLHandler struct {
-	svc shortenerService.Processor
+	svc          shortenerService.Processor
+	serverConfig *config.ServerConfig
 }
 
-func NewURLHandler(svc shortenerService.Processor) (*URLHandler, error) {
+func NewURLHandler(svc shortenerService.Processor, serverConfig *config.ServerConfig) (*URLHandler, error) {
 	if svc == nil {
 		return nil, fmt.Errorf("shortenerService: nil")
 	}
 
-	return &URLHandler{svc: svc}, nil
+	return &URLHandler{svc: svc, serverConfig: serverConfig}, nil
 }
 
 func (h *URLHandler) HandleGetURL() http.HandlerFunc {
@@ -35,10 +37,10 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 
 		if err != nil {
 			switch err.(type) {
-				default:
-					http.Error(rw, err.Error(), http.StatusInternalServerError)
-				case *sertviceErrors.ServiceBusinessError:
-					http.Error(rw, err.Error(), http.StatusNotFound)
+			default:
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+			case *sertviceErrors.ServiceBusinessError:
+				http.Error(rw, err.Error(), http.StatusNotFound)
 			}
 			return
 		}
@@ -69,7 +71,7 @@ func (h *URLHandler) HandlePostURL() http.HandlerFunc {
 
 		u := &url.URL{
 			Scheme: "http",
-			Host:   r.Host,
+			Host:   h.serverConfig.BaseURL,
 			Path:   id,
 		}
 
@@ -86,10 +88,9 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 		if rContentType != "application/json" {
 			http.Error(rw, "Invalid Content-Type", http.StatusBadRequest)
 		}
-		
 
 		b, err := ioutil.ReadAll(r.Body)
-		
+
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 			return
@@ -99,22 +100,22 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 
 		ctx := context.Background()
 		id, err := h.svc.SaveURL(ctx, post.URL)
-		
+
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 			return
 		}
-		
+
 		u := &url.URL{
 			Scheme: "http",
-			Host:   r.Host,
+			Host:   h.serverConfig.BaseURL,
 			Path:   id,
 		}
 
 		resData := model.ResponseURL{
 			ShortURL: u.String(),
 		}
-		
+
 		resBody, err := json.Marshal(resData)
 
 		if err != nil {

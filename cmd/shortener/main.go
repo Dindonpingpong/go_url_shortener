@@ -17,7 +17,11 @@ import (
 func main() {
 	ctx := context.Background()
 
-	cfg := config.NewDefaultConfiguration()
+	cfg, err := config.NewDefaultConfiguration()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	storage := inmemory.NewStorage()
 	

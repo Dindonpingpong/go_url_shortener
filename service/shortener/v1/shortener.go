@@ -45,7 +45,7 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string) (id string, err 
 		return "", err
 	}
 
-	return id, nil
+	return shortUrl, nil
 }
 
 func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err error) {
