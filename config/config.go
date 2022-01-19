@@ -1,6 +1,8 @@
 package config
 
 import (
+	"flag"
+
 	"github.com/caarlos0/env/v6"
 )
 
@@ -59,4 +61,16 @@ func NewDefaultConfiguration() (*Config, error) {
 		ServerConfig: serverCfg,
 		StorageConfig: storageCfg,
 	}, nil
+}
+
+func (c *Config) ParseFlags() {
+	a := flag.String("a", ":8080", "server address")
+	b := flag.String("b", "http://localhost:8080", "base url")
+	f := flag.String("f", "url_storage.json", "file path to storage")
+
+	flag.Parse()
+
+	c.ServerConfig.ServerAddress = *a
+	c.ServerConfig.BaseURL = *b
+	c.StorageConfig.FileStoragePath = *f
 }

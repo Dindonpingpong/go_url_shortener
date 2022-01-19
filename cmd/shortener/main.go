@@ -19,6 +19,8 @@ func main() {
 
 	cfg, err := config.NewDefaultConfiguration()
 
+	cfg.ParseFlags()
+
 	if err != nil {
 		log.Fatal(err)
 	}
