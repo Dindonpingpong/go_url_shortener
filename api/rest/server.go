@@ -11,14 +11,14 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func InitServer(ctx context.Context, cfg *config.Config, st storage.URLStorer) (server *http.Server, err error) {
+func InitServer(ctx context.Context, cfg *config.ServerConfig, st storage.URLStorer) (server *http.Server, err error) {
 	shortenerService, err := shortener.NewShortenerService(st)
 
 	if err != nil {
 		return nil, err
 	}
 
-	urlHandler, err := handlers.NewURLHandler(shortenerService, cfg.ServerConfig)
+	urlHandler, err := handlers.NewURLHandler(shortenerService, cfg)
 
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func InitServer(ctx context.Context, cfg *config.Config, st storage.URLStorer) (
 	r.Post("/", urlHandler.HandlePostURL())
 
 	return &http.Server{
-		Addr: cfg.ServerConfig.ServerAddress,
+		Addr: cfg.ServerAddress,
 		Handler: r,
 	}, nil
 }

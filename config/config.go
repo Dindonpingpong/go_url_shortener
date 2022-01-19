@@ -15,7 +15,7 @@ type ServerConfig struct {
 }
 
 type StorageConfig struct {
-	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"url_storage.json"`
 }
 
 func NewServerConfig() (*ServerConfig, error) {
