@@ -33,19 +33,19 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string) (id string, err 
 		return "", &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
 	}
 	
-	shortUrl, err := short.GenereteShortString(rawURL)
+	shortURL, err := short.GenereteShortString(rawURL)
 	
 	if err != nil {
 		return "", &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
 	}
 
-	err = s.urlStorer.SaveShortedURL(ctx, rawURL, shortUrl)
+	err = s.urlStorer.SaveShortedURL(ctx, rawURL, shortURL)
 
 	if err != nil {
 		return "", err
 	}
 
-	return shortUrl, nil
+	return shortURL, nil
 }
 
 func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err error) {
