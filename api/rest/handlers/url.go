@@ -69,11 +69,13 @@ func (h *URLHandler) HandlePostURL() http.HandlerFunc {
 
 		rw.WriteHeader(http.StatusCreated)
 
-		u := &url.URL{
-			Scheme: "http",
-			Host:   h.serverConfig.BaseURL,
-			Path:   id,
+		u, err := url.Parse(h.serverConfig.BaseURL)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
+
+		u.Path = id
 
 		rw.Write([]byte(u.String()))
 	}
@@ -106,9 +108,12 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 			return
 		}
 
-		u := &url.URL{
-			Scheme: "h.serverConfig.BaseURL",
-			Path:   id,
+		u, err := url.Parse(h.serverConfig.BaseURL)
+
+		u.Path = id
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 
 		resData := model.ResponseURL{
