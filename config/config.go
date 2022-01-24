@@ -64,8 +64,8 @@ func NewDefaultConfiguration() (*Config, error) {
 
 func (c *Config) ParseFlags() {
 	a := flag.String("a", ":8080", "server address")
-	b := flag.String("b", "http://localhost:8080", "base url")
-	f := flag.String("f", "url_storage.json", "file path to storage")
+	b := flag.String("b", "localhost:8080", "base url")
+	f := flag.String("f", "storage/filestorage/url_storage.json", "file path to storage")
 
 	flag.Parse()
 
