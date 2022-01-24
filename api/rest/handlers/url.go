@@ -107,8 +107,7 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 		}
 
 		u := &url.URL{
-			Scheme: "http",
-			Host:   h.serverConfig.BaseURL,
+			Scheme: "h.serverConfig.BaseURL",
 			Path:   id,
 		}
 
