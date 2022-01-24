@@ -2,22 +2,21 @@ package config
 
 import (
 	"flag"
-
 	"github.com/caarlos0/env/v6"
 )
 
 type Config struct {
-	ServerConfig *ServerConfig
+	ServerConfig  *ServerConfig
 	StorageConfig *StorageConfig
 }
 
 type ServerConfig struct {
-	ServerAddress string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	BaseURL       string `env:"BASE_URL" envDefault:"localhost:8080"`
+	ServerAddress string `env:"SERVER_ADDRESS"`
+	BaseURL       string `env:"BASE_URL"`
 }
 
 type StorageConfig struct {
-	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"url_storage.json"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 }
 
 func NewServerConfig() (*ServerConfig, error) {
@@ -58,7 +57,7 @@ func NewDefaultConfiguration() (*Config, error) {
 	}
 
 	return &Config{
-		ServerConfig: serverCfg,
+		ServerConfig:  serverCfg,
 		StorageConfig: storageCfg,
 	}, nil
 }
@@ -70,7 +69,14 @@ func (c *Config) ParseFlags() {
 
 	flag.Parse()
 
-	c.ServerConfig.ServerAddress = *a
-	c.ServerConfig.BaseURL = *b
-	c.StorageConfig.FileStoragePath = *f
+	if c.ServerConfig.ServerAddress == "" {
+		c.ServerConfig.ServerAddress = *a
+	}
+	if c.ServerConfig.BaseURL == "" {
+		c.ServerConfig.BaseURL = *b
+	}
+
+	if c.StorageConfig.FileStoragePath == "" {
+		c.StorageConfig.FileStoragePath = *f
+	}
 }

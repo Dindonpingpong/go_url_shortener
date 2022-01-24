@@ -20,12 +20,11 @@ func main() {
 	cfg, err := config.NewDefaultConfiguration()
 
 	cfg.ParseFlags()
-
+	
+	log.Print(cfg.ServerConfig.ServerAddress)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// storage := inmemory.NewStorage()
 
 	storage, err := filestorage.NewStorage(cfg.StorageConfig)
 	
