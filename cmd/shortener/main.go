@@ -11,14 +11,28 @@ import (
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/filestorage"
 )
 
 func main() {
 	ctx := context.Background()
 
-	cfg := config.NewDefaultConfiguration()
+	cfg, err := config.NewDefaultConfiguration()
 
-	server, err := rest.InitServer(ctx, cfg)
+	cfg.ParseFlags()
+	
+	log.Print(cfg.ServerConfig.ServerAddress)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	storage, err := filestorage.NewStorage(cfg.StorageConfig)
+	
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	server, err := rest.InitServer(ctx, cfg.ServerConfig, storage)
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
@@ -43,6 +57,12 @@ func main() {
 
 	defer func() {
 		cancel()
+		
+		err := storage.PersistStorage()
+		
+		if err != nil {
+			log.Fatal(err)
+		}
 	}()
 
 	if err := server.Shutdown(ctx); err != nil {

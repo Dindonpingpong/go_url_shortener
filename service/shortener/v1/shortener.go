@@ -2,13 +2,14 @@ package shortener
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"net/url"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
+	storageErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/errors"
+	sertviceErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/errors"
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/pkg/short"
 )
 
 type Shortener struct {
@@ -29,34 +30,35 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string) (id string, err 
 	_, err = url.ParseRequestURI(rawURL)
 
 	if err != nil {
-		return "", fmt.Errorf("incorrect url")
+		return "", &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
+	}
+	
+	shortURL, err := short.GenereteShortString(rawURL)
+	
+	if err != nil {
+		return "", &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
 	}
 
-	id = generateShortURL(rawURL)
-
-	err = s.urlStorer.SaveShortedURL(ctx, rawURL, id)
+	err = s.urlStorer.SaveShortedURL(ctx, rawURL, shortURL)
 
 	if err != nil {
 		return "", err
 	}
 
-	return id, nil
+	return shortURL, nil
 }
 
 func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err error) {
 	url, err = s.urlStorer.GetURL(ctx, id)
 
 	if err != nil {
-		return "", err
+		switch err.(type) {
+			default:
+				return "", err
+			case *storageErrors.StorageEmptyResultError:
+				return "", &sertviceErrors.ServiceBusinessError{Msg: err.Error()}
+		}
 	}
 
 	return url, nil
-}
-
-func generateShortURL(url string) string {
-	h := md5.New()
-
-	h.Write([]byte(url))
-
-	return hex.EncodeToString(h.Sum(nil))
 }

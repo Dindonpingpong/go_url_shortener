@@ -7,20 +7,18 @@ import (
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/handlers"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener/v1"
-	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/inmemory"
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
 	"github.com/go-chi/chi"
 )
 
-func InitServer(ctx context.Context, cfg *config.Config) (server *http.Server, err error) {
-	storage := inmemory.NewStorage()
-
-	shortenerService, err := shortener.NewShortenerService(storage)
+func InitServer(ctx context.Context, cfg *config.ServerConfig, st storage.URLStorer) (server *http.Server, err error) {
+	shortenerService, err := shortener.NewShortenerService(st)
 
 	if err != nil {
 		return nil, err
 	}
 
-	urlHandler, err := handlers.NewURLHandler(shortenerService)
+	urlHandler, err := handlers.NewURLHandler(shortenerService, cfg)
 
 	if err != nil {
 		return nil, err
@@ -29,10 +27,11 @@ func InitServer(ctx context.Context, cfg *config.Config) (server *http.Server, e
 	r := chi.NewRouter()
 
 	r.Get("/{urlID}", urlHandler.HandleGetURL())
+	r.Post("/api/shorten", urlHandler.JSONHandlePostURL())
 	r.Post("/", urlHandler.HandlePostURL())
 
 	return &http.Server{
-		Addr: cfg.Port,
+		Addr: cfg.ServerAddress,
 		Handler: r,
 	}, nil
 }
