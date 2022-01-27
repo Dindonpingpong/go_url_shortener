@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -36,12 +37,14 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 		url, err := h.svc.GetURL(ctx, urlID)
 
 		if err != nil {
-			switch err.(type) {
-			default:
-				http.Error(rw, err.Error(), http.StatusInternalServerError)
-			case *sertviceErrors.ServiceBusinessError:
+			var serviceBusinessError *sertviceErrors.ServiceBusinessError
+
+			if errors.As(err, &serviceBusinessError) {
 				http.Error(rw, err.Error(), http.StatusNotFound)
+				return
 			}
+
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
