@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/handlers"
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/middlewares"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener/v1"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
@@ -26,6 +27,7 @@ func InitServer(ctx context.Context, cfg *config.ServerConfig, st storage.URLSto
 
 	r := chi.NewRouter()
 
+	r.Use(middlewares.GzipHandle)
 	r.Get("/{urlID}", urlHandler.HandleGetURL())
 	r.Post("/api/shorten", urlHandler.JSONHandlePostURL())
 	r.Post("/", urlHandler.HandlePostURL())
