@@ -66,3 +66,11 @@ func (s *Storage) GetURLsByUserID(ctx context.Context, userID string) (urls []se
 func (s *Storage) PersistStorage() error {
 	return nil
 }
+
+func (s *Storage) Ping() error {
+	return nil
+}
+
+func (s *Storage) Close() error {
+	return nil
+}

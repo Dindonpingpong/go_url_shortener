@@ -17,13 +17,25 @@ type URLGetter interface {
 type URLsByUserIDGetter interface {
 	GetURLsByUserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error)
 }
+
+type Persister interface {
+	PersistStorage() error
+}
+
+type Pinger interface {
+	Ping() error
+}
+
+type Closer interface {
+	Close() error
+}
 type URLStorer interface {
 	URLSaver
 	URLGetter
 	URLsByUserIDGetter
 	Persister
+	Pinger
+	Closer
 }
 
-type Persister interface {
-	PersistStorage() error
-}
+

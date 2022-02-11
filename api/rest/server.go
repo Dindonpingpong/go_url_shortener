@@ -43,8 +43,10 @@ func InitServer(ctx context.Context, cfg *config.Config, st storage.URLStorer) (
 	r.Use(cookieHandler.AuthCookieHandle)
 	r.Use(middlewares.CompressHandle)
 	r.Use(middlewares.DecompressHandle)
+
 	r.Get("/{urlID}", urlHandler.HandleGetURL())
 	r.Get("/user/urls", urlHandler.HandleGetURLsByUserID())
+	r.Get("/ping", urlHandler.HandlePing())
 	r.Post("/api/shorten", urlHandler.JSONHandlePostURL())
 	r.Post("/", urlHandler.HandlePostURL())
 

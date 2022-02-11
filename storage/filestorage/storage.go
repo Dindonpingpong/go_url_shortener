@@ -113,6 +113,14 @@ func (s *Storage) PersistStorage() error {
 	return nil
 }
 
+func (s *Storage) Ping() error {
+	return nil
+}
+
+func (s *Storage) Close() error {
+	return nil
+}
+
 func (s *Storage) restoreFromFile() error {
 	var rows []storageModel.RowInURLStorage
 

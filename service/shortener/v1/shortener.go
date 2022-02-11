@@ -73,3 +73,7 @@ func (s *Shortener) GetURLsByUserID(ctx context.Context, userID string) (urls []
 
 	return urls, nil
 }
+
+func (s *Shortener) PingStorage() error {
+	return s.urlStorer.Ping()
+}

@@ -200,6 +200,17 @@ func (h *URLHandler) HandleGetURLsByUserID() http.HandlerFunc {
 	}
 }
 
+func (h *URLHandler) HandlePing() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		err := h.svc.PingStorage()
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
 func getUserID(r *http.Request) (string, error) {
 	userCookie, err := r.Cookie(middlewares.UserCookieKey)
 
