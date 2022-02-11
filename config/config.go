@@ -8,6 +8,7 @@ import (
 type Config struct {
 	ServerConfig  *ServerConfig
 	StorageConfig *StorageConfig
+	SecretConfig *SecretConfig
 }
 
 type ServerConfig struct {
@@ -17,6 +18,10 @@ type ServerConfig struct {
 
 type StorageConfig struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+}
+
+type SecretConfig struct {
+	UserKey string `env:"USER_KEY" envDefault:"_rj45"`
 }
 
 func NewServerConfig() (*ServerConfig, error) {
@@ -43,6 +48,19 @@ func NewStorageConfig() (*StorageConfig, error) {
 	return &cfg, nil
 }
 
+func NewSecretConfig() (*SecretConfig, error) {
+	cfg := SecretConfig{}
+
+	err := env.Parse(&cfg)
+
+	
+	if err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
+}
+
 func NewDefaultConfiguration() (*Config, error) {
 	serverCfg, err := NewServerConfig()
 
@@ -56,9 +74,16 @@ func NewDefaultConfiguration() (*Config, error) {
 		return nil, err
 	}
 
+	secretConfig, err := NewSecretConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		ServerConfig:  serverCfg,
 		StorageConfig: storageCfg,
+		SecretConfig: secretConfig,
 	}, nil
 }
 

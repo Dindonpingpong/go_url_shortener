@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	server, err := rest.InitServer(ctx, cfg.ServerConfig, storage)
+	server, err := rest.InitServer(ctx, cfg, storage)
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)

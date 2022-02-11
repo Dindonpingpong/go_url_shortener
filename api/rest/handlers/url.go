@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,7 +10,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/model"
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/middlewares"
+	restModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/model"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
 	sertviceErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/errors"
 	shortenerService "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener"
@@ -63,7 +65,15 @@ func (h *URLHandler) HandlePostURL() http.HandlerFunc {
 		}
 
 		ctx := context.Background()
-		id, err := h.svc.SaveURL(ctx, string(b))
+
+		userID, err := getUserID(r)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		id, err := h.svc.SaveURL(ctx, string(b), userID)
 
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
@@ -86,12 +96,13 @@ func (h *URLHandler) HandlePostURL() http.HandlerFunc {
 
 func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		var post model.RequestURL
+		var post restModel.RequestURL
 
 		rContentType := r.Header.Get("Content-Type")
 
 		if rContentType != "application/json" {
 			http.Error(rw, "Invalid Content-Type", http.StatusBadRequest)
+			return
 		}
 
 		b, err := ioutil.ReadAll(r.Body)
@@ -104,7 +115,15 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 		json.Unmarshal(b, &post)
 
 		ctx := context.Background()
-		id, err := h.svc.SaveURL(ctx, post.URL)
+
+		userID, err := getUserID(r)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		id, err := h.svc.SaveURL(ctx, post.URL, userID)
 
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
@@ -119,7 +138,7 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 
-		resData := model.ResponseURL{
+		resData := restModel.ResponseURL{
 			ShortURL: u.String(),
 		}
 
@@ -134,4 +153,69 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 		rw.WriteHeader(http.StatusCreated)
 		rw.Write(resBody)
 	}
+}
+
+func (h *URLHandler) HandleGetURLsByUserID() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		var responseURLs []restModel.ResponseFullURL
+
+		ctx := context.Background()
+		userID, err := getUserID(r)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		urls, err := h.svc.GetURLsByUserID(ctx, userID)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if len(urls) == 0 {
+			http.Error(rw, "", http.StatusNoContent)
+			return
+		}
+
+		for _, fullURL := range urls {
+			responseURL := restModel.ResponseFullURL{
+				URL: fullURL.OriginalURL,
+				ShortURL: fullURL.ShortURL,
+			}
+
+			responseURLs = append(responseURLs, responseURL)
+		}
+
+		resBody, err := json.Marshal(responseURLs)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		rw.Header().Set("Content-Type", "application/json")
+		rw.Write(resBody)
+	}
+}
+
+func getUserID(r *http.Request) (string, error) {
+	userCookie, err := r.Cookie(middlewares.UserCookieKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	token := userCookie.Value
+
+	data, err := hex.DecodeString(token)
+
+	if err != nil {
+		return "", err
+	}
+
+	userID := data[:16]
+
+	return hex.EncodeToString(userID), nil
 }

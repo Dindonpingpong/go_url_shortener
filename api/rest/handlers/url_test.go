@@ -9,13 +9,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/middlewares"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/model"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/secretary/v1"
 	shortenerService "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener/v1"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/inmemory"
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -25,6 +28,7 @@ type URLHandlerTestSuite struct {
 	storage          storage.URLStorer
 	shortenerService shortenerService.Processor
 	urlHandler       *URLHandler
+	cookieHandler    *middlewares.CookieHandler
 }
 
 func (s *URLHandlerTestSuite) SetupTest() {
@@ -32,6 +36,8 @@ func (s *URLHandlerTestSuite) SetupTest() {
 	s.shortenerService, _ = shortener.NewShortenerService(s.storage)
 	cfg, _ := config.NewDefaultConfiguration()
 	s.urlHandler, _ = NewURLHandler(s.shortenerService, cfg.ServerConfig)
+	secretaryService, _ := secretary.NewSecretaryService(cfg.SecretConfig)
+	s.cookieHandler, _ = middlewares.NewCookieHandler(secretaryService, cfg.SecretConfig)
 }
 
 func TestURLHandlerTestSuite(t *testing.T) {
@@ -40,10 +46,14 @@ func TestURLHandlerTestSuite(t *testing.T) {
 
 func (s *URLHandlerTestSuite) TestGetURL() {
 	ctx := context.Background()
-	urlID, _ := s.shortenerService.SaveURL(ctx, "https://yandex.ru")
+
+	userID := uuid.New().String()
+
+	urlID, _ := s.shortenerService.SaveURL(ctx, "https://yandex.ru", userID)
 
 	r := chi.NewRouter()
 
+	r.Use(s.cookieHandler.AuthCookieHandle)
 	r.Get("/{urlID}", s.urlHandler.HandleGetURL())
 
 	type want struct {
@@ -103,6 +113,7 @@ func (s *URLHandlerTestSuite) TestGetURL() {
 func (s *URLHandlerTestSuite) TestPostURL() {
 	r := chi.NewRouter()
 
+	r.Use(s.cookieHandler.AuthCookieHandle)
 	r.Post("/", s.urlHandler.HandlePostURL())
 
 	type want struct {
@@ -171,6 +182,7 @@ func (s *URLHandlerTestSuite) TestPostURL() {
 func (s *URLHandlerTestSuite) TestJSONPostURL() {
 	r := chi.NewRouter()
 
+	r.Use(s.cookieHandler.AuthCookieHandle)
 	r.Post("/api/shorten", s.urlHandler.JSONHandlePostURL())
 
 	type want struct {
@@ -219,11 +231,11 @@ func (s *URLHandlerTestSuite) TestJSONPostURL() {
 			reqBody, _ := json.Marshal(tt.url)
 			payload := strings.NewReader(string(reqBody))
 			req, err := http.NewRequest(http.MethodPost, ts.URL+"/api/shorten", payload)
-			
+
 			if err != nil {
 				t.Errorf("Problem with server")
 			}
-			
+
 			req.Header.Set("Content-Type", "application/json")
 			client := &http.Client{
 				CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -236,6 +248,7 @@ func (s *URLHandlerTestSuite) TestJSONPostURL() {
 			buf := new(bytes.Buffer)
 			buf.ReadFrom(res.Body)
 			newStr := buf.String()
+
 			if err != nil {
 				t.Errorf(err.Error())
 			} else {

@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/pkg/short"
+	sertviceErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/errors"
+	serviceModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/model"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
 	storageErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/errors"
-	sertviceErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/errors"
-	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/pkg/short"
 )
 
 type Shortener struct {
@@ -26,20 +27,20 @@ func NewShortenerService(st storage.URLStorer) (*Shortener, error) {
 	return &Shortener{st}, nil
 }
 
-func (s *Shortener) SaveURL(ctx context.Context, rawURL string) (id string, err error) {
+func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userId string) (id string, err error) {
 	_, err = url.ParseRequestURI(rawURL)
 
 	if err != nil {
 		return "", &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
 	}
-	
+
 	shortURL, err := short.GenereteShortString(rawURL)
-	
+
 	if err != nil {
 		return "", &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
 	}
 
-	err = s.urlStorer.SaveShortedURL(ctx, rawURL, shortURL)
+	err = s.urlStorer.SaveShortedURL(ctx, rawURL, userId, shortURL)
 
 	if err != nil {
 		return "", err
@@ -53,12 +54,22 @@ func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err erro
 
 	if err != nil {
 		switch err.(type) {
-			default:
-				return "", err
-			case *storageErrors.StorageEmptyResultError:
-				return "", &sertviceErrors.ServiceBusinessError{Msg: err.Error()}
+		default:
+			return "", err
+		case *storageErrors.StorageEmptyResultError:
+			return "", &sertviceErrors.ServiceBusinessError{Msg: err.Error()}
 		}
 	}
 
 	return url, nil
+}
+
+func (s *Shortener) GetURLsByUserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error) {
+	urls, err = s.urlStorer.GetURLsByUserID(ctx, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return urls, nil
 }
