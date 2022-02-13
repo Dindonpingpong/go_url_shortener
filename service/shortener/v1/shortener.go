@@ -74,6 +74,33 @@ func (s *Shortener) GetURLsByUserID(ctx context.Context, userID string) (urls []
 	return urls, nil
 }
 
+func (s *Shortener) SaveBatchShortedURL(ctx context.Context, userID string, urls []string) (savedUrls []serviceModel.FullURL, err error) {
+	for _, originalURL := range urls {
+		_, err = url.ParseRequestURI(originalURL)
+
+		if err != nil {
+			return nil, &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
+		}
+
+		shortURL, err := short.GenereteShortString(originalURL)
+
+		if err != nil {
+			return nil, &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
+		}
+
+		fullURL := serviceModel.FullURL{
+			OriginalURL: originalURL,
+			ShortURL: shortURL,
+		}
+
+		savedUrls = append(savedUrls, fullURL)
+	}
+
+	err = s.urlStorer.SaveBatchShortedURL(ctx, userID, savedUrls)
+
+	return savedUrls, err
+}
+
 func (s *Shortener) PingStorage() error {
 	return s.urlStorer.Ping()
 }

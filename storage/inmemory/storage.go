@@ -60,7 +60,28 @@ func (s *Storage) GetURLsByUserID(ctx context.Context, userID string) (urls []se
 		}
 	}
 
+	if len(urls) == 0 {
+		return nil, &errors.StorageEmptyResultError{ID: userID}
+	}
+
 	return urls, nil
+}
+
+func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string,urls []serviceModel.FullURL) (err error) {
+	s.mu.Lock()
+
+	for _, url := range urls {
+		urlInDb := storageModel.URLInDB{
+			URL:    url.OriginalURL,
+			UserID: userID,
+		}
+
+		s.DB[url.ShortURL] = urlInDb
+	}
+
+	s.mu.Unlock()
+
+	return nil
 }
 
 func (s *Storage) PersistStorage() error {

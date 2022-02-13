@@ -18,6 +18,9 @@ type URLsByUserIDGetter interface {
 	GetURLsByUserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error)
 }
 
+type URLsBatchSaver interface {
+	SaveBatchShortedURL(ctx context.Context, userID string, urls []serviceModel.FullURL) (err error)
+}
 type Persister interface {
 	PersistStorage() error
 }
@@ -33,6 +36,7 @@ type URLStorer interface {
 	URLSaver
 	URLGetter
 	URLsByUserIDGetter
+	URLsBatchSaver
 	Persister
 	Pinger
 	Closer

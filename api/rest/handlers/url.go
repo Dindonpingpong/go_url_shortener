@@ -170,18 +170,20 @@ func (h *URLHandler) HandleGetURLsByUserID() http.HandlerFunc {
 		urls, err := h.svc.GetURLsByUserID(ctx, userID)
 
 		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
+			var serviceBusinessError *sertviceErrors.ServiceBusinessError
 
-		if len(urls) == 0 {
-			http.Error(rw, "", http.StatusNoContent)
+			if errors.As(err, &serviceBusinessError) {
+				http.Error(rw, err.Error(), http.StatusNoContent)
+				return
+			}
+
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		for _, fullURL := range urls {
 			responseURL := restModel.ResponseFullURL{
-				URL: fullURL.OriginalURL,
+				URL:      fullURL.OriginalURL,
 				ShortURL: fullURL.ShortURL,
 			}
 
@@ -196,6 +198,73 @@ func (h *URLHandler) HandleGetURLsByUserID() http.HandlerFunc {
 		}
 
 		rw.Header().Set("Content-Type", "application/json")
+		rw.Write(resBody)
+	}
+}
+
+func (h *URLHandler) HandleBatchPostURLs() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rContentType := r.Header.Get("Content-Type")
+
+		if rContentType != "application/json" {
+			http.Error(rw, "Invalid Content-Type", http.StatusBadRequest)
+			return
+		}
+
+		b, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		requestURLs := make([]restModel.RequestBatchItem, 0)
+
+		json.Unmarshal(b, &requestURLs)
+
+		ctx := context.Background()
+		userID, err := getUserID(r)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		urlsToSave := make([]string, 0)
+
+		for _, url := range requestURLs {
+			urlsToSave = append(urlsToSave, url.OriginalURL)
+		}
+
+		savedUrls, err := h.svc.SaveBatchShortedURL(ctx, userID, urlsToSave)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		responseURLs := make([]restModel.ResponseBatchItem, 0)
+
+		for k, item := range requestURLs {
+			url := savedUrls[k]
+			
+			responseURL := restModel.ResponseBatchItem{
+				CorrelationID: item.CorrelationID,
+				ShortURL: url.ShortURL,
+			}
+
+			responseURLs = append(responseURLs, responseURL)
+		}
+
+		resBody, err := json.Marshal(responseURLs)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		rw.Header().Set("Content-Type", "application/json")
+		rw.WriteHeader(http.StatusCreated)
 		rw.Write(resBody)
 	}
 }
