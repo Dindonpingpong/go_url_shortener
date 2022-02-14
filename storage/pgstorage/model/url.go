@@ -2,7 +2,7 @@ package model
 
 import "github.com/google/uuid"
 
-type UrlInDB struct {
+type URLInDB struct {
 	ID       uint      `db:"id"`
 	UserID   uuid.UUID `db:"user_id"`
 	URL      string    `db:"url"`

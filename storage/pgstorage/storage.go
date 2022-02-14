@@ -60,7 +60,7 @@ func (s *Storage) SaveShortedURL(ctx context.Context, url string, userID string,
 }
 
 func (s *Storage) GetURLsByuserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error) {
-	var queryResult []pgModel.UrlInDB
+	var queryResult []pgModel.URLInDB
 
 	query := "SELECT * FROM urls WHERE user_id = $1"
 
