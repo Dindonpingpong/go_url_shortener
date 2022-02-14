@@ -197,7 +197,7 @@ func (s *URLHandlerTestSuite) TestJSONPostURL() {
 		{
 			name: "Correct url",
 			url: model.RequestURL{
-				URL: "http://yandex.com",
+				URL: "http://google.com",
 			},
 			want: want{
 				code: 201,

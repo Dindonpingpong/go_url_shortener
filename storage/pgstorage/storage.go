@@ -2,14 +2,16 @@ package pgstorage
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
 	serviceModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/model"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
-	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/errors"
+	storageErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/errors"
 	pgModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/pgstorage/model"
+	"github.com/jackc/pgerrcode"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 var _ storage.URLStorer = (*Storage)(nil)
@@ -46,7 +48,13 @@ func (s *Storage) GetURL(ctx context.Context, shortedURL string) (url string, er
 func (s *Storage) SaveShortedURL(ctx context.Context, url string, userId string, shortedURL string) error {
 	query := "INSERT INTO urls (user_id, url, short_url) VALUES ($1, $2, $3)"
 
+	var pgErr *pq.Error
+	
 	_, err := s.db.ExecContext(ctx, query, userId, url, shortedURL)
+
+	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+		return &storageErrors.StorageAlreadyExistsError{ShortURL: shortedURL}
+	}
 
 	return err
 }
@@ -63,7 +71,7 @@ func (s *Storage) GetURLsByUserID(ctx context.Context, userID string) (urls []se
 	}
 
 	if len(queryResult) == 0 {
-		return nil, &errors.StorageEmptyResultError{ID: userID}
+		return nil, &storageErrors.StorageEmptyResultError{ID: userID}
 	}
 
 	for _, urlInDb := range queryResult {
@@ -86,6 +94,8 @@ func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string, urls [
 	if err != nil {
 		return err
 	}
+
+	defer tx.Rollback()
 
 	for _, url := range urls {
 		_, err = tx.ExecContext(

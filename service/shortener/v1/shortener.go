@@ -2,6 +2,7 @@ package shortener
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -37,13 +38,19 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userId string) (
 	shortURL, err := short.GenereteShortString(rawURL)
 
 	if err != nil {
-		return "", &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
+		return "", &sertviceErrors.ServiceBusinessError{Msg: "cannot generate short url"}
 	}
 
 	err = s.urlStorer.SaveShortedURL(ctx, rawURL, userId, shortURL)
 
 	if err != nil {
-		return "", err
+		var storageAlreadyExistsError *storageErrors.StorageAlreadyExistsError
+
+		if errors.As(err, &storageAlreadyExistsError) {
+			return shortURL, &sertviceErrors.ServiceAlreadyExistsError{Msg: err.Error()}
+		}
+
+		return "", &sertviceErrors.ServiceBusinessError{Msg: err.Error()}
 	}
 
 	return shortURL, nil
@@ -57,8 +64,9 @@ func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err erro
 		default:
 			return "", err
 		case *storageErrors.StorageEmptyResultError:
-			return "", &sertviceErrors.ServiceBusinessError{Msg: err.Error()}
+			return "", &sertviceErrors.ServiceNotFoundByIdError{ID: err.Error()}
 		}
+		
 	}
 
 	return url, nil

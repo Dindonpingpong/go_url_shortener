@@ -39,9 +39,9 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 		url, err := h.svc.GetURL(ctx, urlID)
 
 		if err != nil {
-			var serviceBusinessError *sertviceErrors.ServiceBusinessError
+			var serviceNotFound *sertviceErrors.ServiceNotFoundByIdError
 
-			if errors.As(err, &serviceBusinessError) {
+			if errors.As(err, &serviceNotFound) {
 				http.Error(rw, err.Error(), http.StatusNotFound)
 				return
 			}
@@ -76,27 +76,41 @@ func (h *URLHandler) HandlePostURL() http.HandlerFunc {
 		id, err := h.svc.SaveURL(ctx, string(b), userID)
 
 		if err != nil {
+			var serviceAlreadyExistsError *sertviceErrors.ServiceAlreadyExistsError
+
+			if errors.As(err, &serviceAlreadyExistsError) {
+				u, err := createFullURL(h.serverConfig.BaseURL, id)
+
+				if err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				rw.WriteHeader(http.StatusConflict)
+				rw.Write([]byte(u))
+				return
+			}
+
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		rw.WriteHeader(http.StatusCreated)
 
-		u, err := url.Parse(h.serverConfig.BaseURL)
+		u, err := createFullURL(h.serverConfig.BaseURL, id)
 
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		u.Path = id
-
-		rw.Write([]byte(u.String()))
+		rw.Write([]byte(u))
 	}
 }
 
 func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		var post restModel.RequestURL
+		var requestURl restModel.RequestURL
 
 		rContentType := r.Header.Get("Content-Type")
 
@@ -112,7 +126,7 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 			return
 		}
 
-		json.Unmarshal(b, &post)
+		json.Unmarshal(b, &requestURl)
 
 		ctx := context.Background()
 
@@ -123,23 +137,37 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 			return
 		}
 
-		id, err := h.svc.SaveURL(ctx, post.URL, userID)
+		id, err := h.svc.SaveURL(ctx, requestURl.URL, userID)
 
 		if err != nil {
+			var serviceAlreadyExistsError *sertviceErrors.ServiceAlreadyExistsError
+
+			if errors.As(err, &serviceAlreadyExistsError) {
+				url, err := createFullURL(h.serverConfig.BaseURL, id)
+
+				if err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				rw.WriteHeader(http.StatusConflict)
+				rw.Write([]byte(url))
+				return
+			}
+
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		u, err := url.Parse(h.serverConfig.BaseURL)
-
-		u.Path = id
+		u, err := createFullURL(h.serverConfig.BaseURL, id)
 
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		resData := restModel.ResponseURL{
-			ShortURL: u.String(),
+			ShortURL: u,
 		}
 
 		resBody, err := json.Marshal(resData)
@@ -247,10 +275,10 @@ func (h *URLHandler) HandleBatchPostURLs() http.HandlerFunc {
 
 		for k, item := range requestURLs {
 			url := savedUrls[k]
-			
+
 			responseURL := restModel.ResponseBatchItem{
 				CorrelationID: item.CorrelationID,
-				ShortURL: url.ShortURL,
+				ShortURL:      url.ShortURL,
 			}
 
 			responseURLs = append(responseURLs, responseURL)
@@ -298,4 +326,16 @@ func getUserID(r *http.Request) (string, error) {
 	userID := data[:16]
 
 	return hex.EncodeToString(userID), nil
+}
+
+func createFullURL(baseURL string, path string) (string, error) {
+	u, err := url.Parse(baseURL)
+
+	if err != nil {
+		return "", err
+	}
+
+	u.Path = path
+
+	return u.String(), nil
 }
