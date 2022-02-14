@@ -44,10 +44,10 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userID string) (
 	err = s.urlStorer.SaveShortedURL(ctx, rawURL, userID, shortURL)
 
 	if err != nil {
-		var storageEmptyResultError *storageErrors.StorageEmptyResultError
+		var storageAlreadyExistsError *storageErrors.StorageAlreadyExistsError
 
-		if errors.As(err, &storageEmptyResultError) {
-			return shortURL, &sertviceErrors.ServiceNotFoundByIDError{ID: err.Error()}
+		if errors.As(err, &storageAlreadyExistsError) {
+			return shortURL, &sertviceErrors.ServiceAlreadyExistsError{Msg: err.Error()}
 		}
 
 		return "", &sertviceErrors.ServiceBusinessError{Msg: err.Error()}

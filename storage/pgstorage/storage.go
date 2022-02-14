@@ -102,8 +102,8 @@ func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string, urls [
 			ctx,
 			query,
 			userID,
-			url.ShortURL,
 			url.OriginalURL,
+			url.ShortURL,
 		)
 
 		if err != nil {
