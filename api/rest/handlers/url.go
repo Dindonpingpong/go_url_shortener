@@ -210,9 +210,9 @@ func (h *URLHandler) HandleGetURLsByuserID() http.HandlerFunc {
 		urls, err := h.svc.GetURLsByuserID(ctx, userID)
 
 		if err != nil {
-			var serviceBusinessError *sertviceErrors.ServiceBusinessError
+			var serviceNotFound *sertviceErrors.ServiceNotFoundByIDError
 
-			if errors.As(err, &serviceBusinessError) {
+			if errors.As(err, &serviceNotFound) {
 				http.Error(rw, err.Error(), http.StatusNoContent)
 				return
 			}
