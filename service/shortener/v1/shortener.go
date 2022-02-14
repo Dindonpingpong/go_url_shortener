@@ -60,13 +60,13 @@ func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err erro
 	url, err = s.urlStorer.GetURL(ctx, id)
 
 	if err != nil {
-		switch err.(type) {
-		default:
-			return "", err
-		case *storageErrors.StorageEmptyResultError:
+		var storageEmptyResultError *storageErrors.StorageEmptyResultError
+
+		if errors.As(err, &storageEmptyResultError) {
 			return "", &sertviceErrors.ServiceNotFoundByIDError{ID: err.Error()}
 		}
 
+		return "", err
 	}
 
 	return url, nil
@@ -76,6 +76,12 @@ func (s *Shortener) GetURLsByuserID(ctx context.Context, userID string) (urls []
 	urls, err = s.urlStorer.GetURLsByuserID(ctx, userID)
 
 	if err != nil {
+		var storageEmptyResultError *storageErrors.StorageEmptyResultError
+
+		if errors.As(err, &storageEmptyResultError) {
+			return nil, &sertviceErrors.ServiceNotFoundByIDError{ID: err.Error()}
+		}
+
 		return nil, err
 	}
 

@@ -110,7 +110,7 @@ func (h *URLHandler) HandlePostURL() http.HandlerFunc {
 
 func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		var requestURl restModel.RequestURL
+		var requestURL restModel.RequestURL
 
 		rContentType := r.Header.Get("Content-Type")
 
@@ -126,7 +126,7 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 			return
 		}
 
-		json.Unmarshal(b, &requestURl)
+		json.Unmarshal(b, &requestURL)
 
 		ctx := context.Background()
 
@@ -137,7 +137,7 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 			return
 		}
 
-		id, err := h.svc.SaveURL(ctx, requestURl.URL, userID)
+		id, err := h.svc.SaveURL(ctx, requestURL.URL, userID)
 
 		if err != nil {
 			var serviceAlreadyExistsError *sertviceErrors.ServiceAlreadyExistsError
@@ -295,9 +295,16 @@ func (h *URLHandler) HandleBatchPostURLs() http.HandlerFunc {
 		for k, item := range requestURLs {
 			url := savedUrls[k]
 
+			u, err := createFullURL(h.serverConfig.BaseURL, url.ShortURL)
+
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
 			responseURL := restModel.ResponseBatchItem{
 				CorrelationID: item.CorrelationID,
-				ShortURL:      url.ShortURL,
+				ShortURL:      u,
 			}
 
 			responseURLs = append(responseURLs, responseURL)
