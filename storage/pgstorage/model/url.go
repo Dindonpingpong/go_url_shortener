@@ -3,8 +3,8 @@ package model
 import "github.com/google/uuid"
 
 type UrlInDB struct {
-	Id       uint      `db:"id"`
+	ID       uint      `db:"id"`
 	UserID   uuid.UUID `db:"user_id"`
-	Url      string    `db:"url"`
+	URL      string    `db:"url"`
 	ShortURL string    `db:"short_url"`
 }

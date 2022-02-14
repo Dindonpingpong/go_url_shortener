@@ -91,7 +91,7 @@ func (c *Config) ParseFlags() {
 	a := flag.String("a", ":8080", "server address")
 	b := flag.String("b", "http://localhost:8080", "base url")
 	f := flag.String("f", "storage/filestorage/url_storage.json", "file path to storage")
-	d := flag.String("d", "postgres://ya:url@localhost:5432", "database connection")
+	d := flag.String("d", "postgres://dindon:wwq@localhost:5432/yandex", "database connection")
 
 	flag.Parse()
 

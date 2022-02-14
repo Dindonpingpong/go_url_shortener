@@ -23,7 +23,7 @@ type Storage struct {
 
 func NewStorage(cfg *config.StorageConfig) (*Storage, error) {
 	db, err := sqlx.Open("postgres", cfg.DatabaseDSN)
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (s *Storage) GetURLsByuserID(ctx context.Context, userID string) (urls []se
 
 	for _, urlInDB := range queryResult {
 		fullURL := serviceModel.FullURL{
-			OriginalURL: urlInDB.Url,
+			OriginalURL: urlInDB.URL,
 			ShortURL:    urlInDB.ShortURL,
 		}
 
@@ -87,7 +87,7 @@ func (s *Storage) GetURLsByuserID(ctx context.Context, userID string) (urls []se
 }
 
 func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string, urls []serviceModel.FullURL) (err error) {
-	var query = "INSERT INT urls (user_id, url, short_url) 	VALUES ($1, $2, $3)"
+	var query = "INSERT INTO urls (user_id, url, short_url) VALUES ($1, $2, $3)"
 
 	tx, err := s.db.Begin()
 
