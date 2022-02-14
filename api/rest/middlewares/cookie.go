@@ -15,7 +15,7 @@ type CookieHandler struct {
 }
 
 const (
-	UserCookieKey  = "user"
+	UserCookieKey = "user"
 )
 
 func NewCookieHandler(svc secretary.Secretary, cfg *config.SecretConfig) (*CookieHandler, error) {

@@ -23,7 +23,7 @@ type Storage struct {
 
 func NewStorage(cfg *config.StorageConfig) (*Storage, error) {
 	db, err := sqlx.Open("postgres", cfg.DatabaseDSN)
-
+	
 	if err != nil {
 		return nil, err
 	}
@@ -45,12 +45,12 @@ func (s *Storage) GetURL(ctx context.Context, shortedURL string) (url string, er
 	return url, err
 }
 
-func (s *Storage) SaveShortedURL(ctx context.Context, url string, userId string, shortedURL string) error {
+func (s *Storage) SaveShortedURL(ctx context.Context, url string, userID string, shortedURL string) error {
 	query := "INSERT INTO urls (user_id, url, short_url) VALUES ($1, $2, $3)"
 
 	var pgErr *pq.Error
-	
-	_, err := s.db.ExecContext(ctx, query, userId, url, shortedURL)
+
+	_, err := s.db.ExecContext(ctx, query, userID, url, shortedURL)
 
 	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 		return &storageErrors.StorageAlreadyExistsError{ShortURL: shortedURL}
@@ -59,8 +59,8 @@ func (s *Storage) SaveShortedURL(ctx context.Context, url string, userId string,
 	return err
 }
 
-func (s *Storage) GetURLsByUserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error) {
-	var queryResult []pgModel.URLInDB
+func (s *Storage) GetURLsByuserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error) {
+	var queryResult []pgModel.UrlInDB
 
 	query := "SELECT * FROM urls WHERE user_id = $1"
 
@@ -74,10 +74,10 @@ func (s *Storage) GetURLsByUserID(ctx context.Context, userID string) (urls []se
 		return nil, &storageErrors.StorageEmptyResultError{ID: userID}
 	}
 
-	for _, urlInDb := range queryResult {
+	for _, urlInDB := range queryResult {
 		fullURL := serviceModel.FullURL{
-			OriginalURL: urlInDb.Url,
-			ShortURL:    urlInDb.ShortURL,
+			OriginalURL: urlInDB.Url,
+			ShortURL:    urlInDB.ShortURL,
 		}
 
 		urls = append(urls, fullURL)

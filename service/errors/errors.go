@@ -1,15 +1,15 @@
 package errors
 
-type(
-	ServiceBusinessError struct{
+type (
+	ServiceBusinessError struct {
 		Msg string
 	}
 
-	ServiceNotFoundByIdError struct{
+	ServiceNotFoundByIDError struct {
 		ID string
 	}
 
-	ServiceAlreadyExistsError struct{
+	ServiceAlreadyExistsError struct {
 		Msg string
 	}
 )
@@ -18,7 +18,7 @@ func (e *ServiceBusinessError) Error() string {
 	return e.Msg
 }
 
-func (e *ServiceNotFoundByIdError) Error() string {
+func (e *ServiceNotFoundByIDError) Error() string {
 	return e.ID
 }
 

@@ -5,9 +5,9 @@ import (
 	"sync"
 
 	serviceModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/model"
+	storageModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/model"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/errors"
-	storageModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/model"
 )
 
 var _ storage.URLStorer = (*Storage)(nil)
@@ -25,7 +25,7 @@ func NewStorage() *Storage {
 
 func (s *Storage) GetURL(ctx context.Context, shortedURL string) (url string, err error) {
 	s.mu.Lock()
-	URLInDB, ok := s.DB[shortedURL]
+	urlInDB, ok := s.DB[shortedURL]
 
 	defer s.mu.Unlock()
 
@@ -33,23 +33,23 @@ func (s *Storage) GetURL(ctx context.Context, shortedURL string) (url string, er
 		return "", &errors.StorageEmptyResultError{ID: shortedURL}
 	}
 
-	return URLInDB.URL, nil
+	return urlInDB.URL, nil
 }
 
-func (s *Storage) SaveShortedURL(ctx context.Context, url string, userId string, shortedURL string) error {
+func (s *Storage) SaveShortedURL(ctx context.Context, url string, userID string, shortedURL string) error {
 	s.mu.Lock()
 
-	urlInDb := storageModel.URLInDB{
+	urlInDB := storageModel.URLInDB{
 		URL:    url,
-		UserID: userId,
+		UserID: userID,
 	}
-	s.DB[shortedURL] = urlInDb
+	s.DB[shortedURL] = urlInDB
 	s.mu.Unlock()
 
 	return nil
 }
 
-func (s *Storage) GetURLsByUserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error) {
+func (s *Storage) GetURLsByuserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error) {
 	for shortedURL, url := range s.DB {
 		if url.UserID == userID {
 			fullURL := serviceModel.FullURL{
@@ -67,16 +67,16 @@ func (s *Storage) GetURLsByUserID(ctx context.Context, userID string) (urls []se
 	return urls, nil
 }
 
-func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string,urls []serviceModel.FullURL) (err error) {
+func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string, urls []serviceModel.FullURL) (err error) {
 	s.mu.Lock()
 
 	for _, url := range urls {
-		urlInDb := storageModel.URLInDB{
+		urlInDB := storageModel.URLInDB{
 			URL:    url.OriginalURL,
 			UserID: userID,
 		}
 
-		s.DB[url.ShortURL] = urlInDb
+		s.DB[url.ShortURL] = urlInDB
 	}
 
 	s.mu.Unlock()

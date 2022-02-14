@@ -28,7 +28,7 @@ func NewShortenerService(st storage.URLStorer) (*Shortener, error) {
 	return &Shortener{st}, nil
 }
 
-func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userId string) (id string, err error) {
+func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userID string) (id string, err error) {
 	_, err = url.ParseRequestURI(rawURL)
 
 	if err != nil {
@@ -41,7 +41,7 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userId string) (
 		return "", &sertviceErrors.ServiceBusinessError{Msg: "cannot generate short url"}
 	}
 
-	err = s.urlStorer.SaveShortedURL(ctx, rawURL, userId, shortURL)
+	err = s.urlStorer.SaveShortedURL(ctx, rawURL, userID, shortURL)
 
 	if err != nil {
 		var storageAlreadyExistsError *storageErrors.StorageAlreadyExistsError
@@ -64,16 +64,16 @@ func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err erro
 		default:
 			return "", err
 		case *storageErrors.StorageEmptyResultError:
-			return "", &sertviceErrors.ServiceNotFoundByIdError{ID: err.Error()}
+			return "", &sertviceErrors.ServiceNotFoundByIDError{ID: err.Error()}
 		}
-		
+
 	}
 
 	return url, nil
 }
 
-func (s *Shortener) GetURLsByUserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error) {
-	urls, err = s.urlStorer.GetURLsByUserID(ctx, userID)
+func (s *Shortener) GetURLsByuserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error) {
+	urls, err = s.urlStorer.GetURLsByuserID(ctx, userID)
 
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (s *Shortener) SaveBatchShortedURL(ctx context.Context, userID string, urls
 
 		fullURL := serviceModel.FullURL{
 			OriginalURL: originalURL,
-			ShortURL: shortURL,
+			ShortURL:    shortURL,
 		}
 
 		savedUrls = append(savedUrls, fullURL)

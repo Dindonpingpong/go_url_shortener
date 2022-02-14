@@ -39,7 +39,7 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 		url, err := h.svc.GetURL(ctx, urlID)
 
 		if err != nil {
-			var serviceNotFound *sertviceErrors.ServiceNotFoundByIdError
+			var serviceNotFound *sertviceErrors.ServiceNotFoundByIDError
 
 			if errors.As(err, &serviceNotFound) {
 				http.Error(rw, err.Error(), http.StatusNotFound)
@@ -66,7 +66,7 @@ func (h *URLHandler) HandlePostURL() http.HandlerFunc {
 
 		ctx := context.Background()
 
-		userID, err := getUserID(r)
+		userID, err := getuserID(r)
 
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -130,7 +130,7 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 
 		ctx := context.Background()
 
-		userID, err := getUserID(r)
+		userID, err := getuserID(r)
 
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -143,15 +143,27 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 			var serviceAlreadyExistsError *sertviceErrors.ServiceAlreadyExistsError
 
 			if errors.As(err, &serviceAlreadyExistsError) {
-				url, err := createFullURL(h.serverConfig.BaseURL, id)
+				u, err := createFullURL(h.serverConfig.BaseURL, id)
 
 				if err != nil {
 					http.Error(rw, err.Error(), http.StatusInternalServerError)
 					return
 				}
 
+				resData := restModel.ResponseURL{
+					ShortURL: u,
+				}
+
+				resBody, err := json.Marshal(resData)
+
+				if err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				rw.Header().Set("Content-Type", "application/json")
 				rw.WriteHeader(http.StatusConflict)
-				rw.Write([]byte(url))
+				rw.Write([]byte(resBody))
 				return
 			}
 
@@ -183,19 +195,19 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 	}
 }
 
-func (h *URLHandler) HandleGetURLsByUserID() http.HandlerFunc {
+func (h *URLHandler) HandleGetURLsByuserID() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var responseURLs []restModel.ResponseFullURL
 
 		ctx := context.Background()
-		userID, err := getUserID(r)
+		userID, err := getuserID(r)
 
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		urls, err := h.svc.GetURLsByUserID(ctx, userID)
+		urls, err := h.svc.GetURLsByuserID(ctx, userID)
 
 		if err != nil {
 			var serviceBusinessError *sertviceErrors.ServiceBusinessError
@@ -210,9 +222,16 @@ func (h *URLHandler) HandleGetURLsByUserID() http.HandlerFunc {
 		}
 
 		for _, fullURL := range urls {
+			u, err := createFullURL(h.serverConfig.BaseURL, fullURL.ShortURL)
+
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
 			responseURL := restModel.ResponseFullURL{
 				URL:      fullURL.OriginalURL,
-				ShortURL: fullURL.ShortURL,
+				ShortURL: u,
 			}
 
 			responseURLs = append(responseURLs, responseURL)
@@ -251,7 +270,7 @@ func (h *URLHandler) HandleBatchPostURLs() http.HandlerFunc {
 		json.Unmarshal(b, &requestURLs)
 
 		ctx := context.Background()
-		userID, err := getUserID(r)
+		userID, err := getuserID(r)
 
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -308,7 +327,7 @@ func (h *URLHandler) HandlePing() http.HandlerFunc {
 	}
 }
 
-func getUserID(r *http.Request) (string, error) {
+func getuserID(r *http.Request) (string, error) {
 	userCookie, err := r.Cookie(middlewares.UserCookieKey)
 
 	if err != nil {

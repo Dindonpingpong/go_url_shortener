@@ -45,13 +45,14 @@ func InitServer(ctx context.Context, cfg *config.Config, st storage.URLStorer) (
 	r.Use(middlewares.DecompressHandle)
 
 	r.Get("/{urlID}", urlHandler.HandleGetURL())
-	r.Get("/user/urls", urlHandler.HandleGetURLsByUserID())
+	r.Get("/user/urls", urlHandler.HandleGetURLsByuserID())
 	r.Get("/ping", urlHandler.HandlePing())
 	r.Post("/api/shorten", urlHandler.JSONHandlePostURL())
 	r.Post("/", urlHandler.HandlePostURL())
+	r.Post("/api/shorten/batch", urlHandler.HandleBatchPostURLs())
 
 	return &http.Server{
-		Addr: cfg.ServerConfig.ServerAddress,
+		Addr:    cfg.ServerConfig.ServerAddress,
 		Handler: r,
 	}, nil
 }

@@ -7,15 +7,15 @@ import (
 )
 
 type URLSaver interface {
-	SaveShortedURL(ctx context.Context, url string, userId string, shortedURL string) error
+	SaveShortedURL(ctx context.Context, url string, userID string, shortedURL string) error
 }
 
 type URLGetter interface {
 	GetURL(ctx context.Context, shortedURL string) (url string, err error)
 }
 
-type URLsByUserIDGetter interface {
-	GetURLsByUserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error)
+type URLsByuserIDGetter interface {
+	GetURLsByuserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error)
 }
 
 type URLsBatchSaver interface {
@@ -35,11 +35,9 @@ type Closer interface {
 type URLStorer interface {
 	URLSaver
 	URLGetter
-	URLsByUserIDGetter
+	URLsByuserIDGetter
 	URLsBatchSaver
 	Persister
 	Pinger
 	Closer
 }
-
-
