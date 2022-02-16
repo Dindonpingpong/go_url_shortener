@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/pkg/short"
-	sertviceErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/errors"
+	serviceErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/errors"
 	serviceModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/model"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
@@ -32,13 +32,13 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userID string) (
 	_, err = url.ParseRequestURI(rawURL)
 
 	if err != nil {
-		return "", &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
+		return "", &serviceErrors.ServiceBusinessError{Msg: "incorrect url"}
 	}
 
 	shortURL, err := short.GenereteShortString(rawURL)
 
 	if err != nil {
-		return "", &sertviceErrors.ServiceBusinessError{Msg: "cannot generate short url"}
+		return "", &serviceErrors.ServiceBusinessError{Msg: "cannot generate short url"}
 	}
 
 	err = s.urlStorer.SaveShortedURL(ctx, rawURL, userID, shortURL)
@@ -46,11 +46,11 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userID string) (
 	if err != nil {
 		var storageAlreadyExistsError *storageErrors.StorageAlreadyExistsError
 
-		if errors.Is(err, storageAlreadyExistsError) {
-			return shortURL, &sertviceErrors.ServiceAlreadyExistsError{Msg: err.Error()}
+		if errors.As(err, &storageAlreadyExistsError) {
+			return shortURL, &serviceErrors.ServiceAlreadyExistsError{Msg: storageAlreadyExistsError.Error()}
 		}
 
-		return "", &sertviceErrors.ServiceBusinessError{Msg: err.Error()}
+		return "", &serviceErrors.ServiceBusinessError{Msg: err.Error()}
 	}
 
 	return shortURL, nil
@@ -62,8 +62,8 @@ func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err erro
 	if err != nil {
 		var storageEmptyResultError *storageErrors.StorageEmptyResultError
 
-		if errors.Is(err, storageEmptyResultError) {
-			return "", &sertviceErrors.ServiceNotFoundByIDError{ID: err.Error()}
+		if errors.As(err, &storageEmptyResultError) {
+			return "", &serviceErrors.ServiceNotFoundByIDError{ID: storageEmptyResultError.Error()}
 		}
 
 		return "", err
@@ -78,8 +78,8 @@ func (s *Shortener) GetURLsByuserID(ctx context.Context, userID string) (urls []
 	if err != nil {
 		var storageEmptyResultError *storageErrors.StorageEmptyResultError
 
-		if errors.Is(err, storageEmptyResultError) {
-			return nil, &sertviceErrors.ServiceNotFoundByIDError{ID: err.Error()}
+		if errors.As(err, &storageEmptyResultError) {
+			return nil, &serviceErrors.ServiceNotFoundByIDError{ID: storageEmptyResultError.Error()}
 		}
 
 		return nil, err
@@ -93,13 +93,13 @@ func (s *Shortener) SaveBatchShortedURL(ctx context.Context, userID string, urls
 		_, err = url.ParseRequestURI(originalURL)
 
 		if err != nil {
-			return nil, &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
+			return nil, &serviceErrors.ServiceBusinessError{Msg: "incorrect url"}
 		}
 
 		shortURL, err := short.GenereteShortString(originalURL)
 
 		if err != nil {
-			return nil, &sertviceErrors.ServiceBusinessError{Msg: "incorrect url"}
+			return nil, &serviceErrors.ServiceBusinessError{Msg: "incorrect url"}
 		}
 
 		fullURL := serviceModel.FullURL{

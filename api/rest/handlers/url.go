@@ -13,7 +13,7 @@ import (
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/middlewares"
 	restModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/api/rest/model"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
-	sertviceErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/errors"
+	serviceErrors "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/errors"
 	shortenerService "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/shortener"
 	"github.com/go-chi/chi"
 )
@@ -39,10 +39,10 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 		url, err := h.svc.GetURL(ctx, urlID)
 
 		if err != nil {
-			var serviceNotFound *sertviceErrors.ServiceNotFoundByIDError
+			var serviceNotFound *serviceErrors.ServiceNotFoundByIDError
 
-			if errors.Is(err, serviceNotFound) {
-				http.Error(rw, err.Error(), http.StatusNotFound)
+			if errors.As(err, &serviceNotFound) {
+				http.Error(rw, serviceNotFound.Error(), http.StatusNotFound)
 				return
 			}
 
@@ -76,13 +76,13 @@ func (h *URLHandler) HandlePostURL() http.HandlerFunc {
 		id, err := h.svc.SaveURL(ctx, string(b), userID)
 
 		if err != nil {
-			var serviceAlreadyExistsError *sertviceErrors.ServiceAlreadyExistsError
+			var serviceAlreadyExistsError *serviceErrors.ServiceAlreadyExistsError
 
-			if errors.Is(err, serviceAlreadyExistsError) {
+			if errors.As(err, &serviceAlreadyExistsError) {
 				u, err := createFullURL(h.serverConfig.BaseURL, id)
 
 				if err != nil {
-					http.Error(rw, err.Error(), http.StatusInternalServerError)
+					http.Error(rw, serviceAlreadyExistsError.Error(), http.StatusInternalServerError)
 					return
 				}
 
@@ -140,13 +140,13 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 		id, err := h.svc.SaveURL(ctx, requestURL.URL, userID)
 
 		if err != nil {
-			var serviceAlreadyExistsError *sertviceErrors.ServiceAlreadyExistsError
+			var serviceAlreadyExistsError *serviceErrors.ServiceAlreadyExistsError
 
-			if errors.Is(err, serviceAlreadyExistsError) {
+			if errors.As(err, &serviceAlreadyExistsError) {
 				u, err := createFullURL(h.serverConfig.BaseURL, id)
 
 				if err != nil {
-					http.Error(rw, err.Error(), http.StatusInternalServerError)
+					http.Error(rw, serviceAlreadyExistsError.Error(), http.StatusInternalServerError)
 					return
 				}
 
@@ -208,10 +208,10 @@ func (h *URLHandler) HandleGetURLsByuserID() http.HandlerFunc {
 		urls, err := h.svc.GetURLsByuserID(ctx, userID)
 
 		if err != nil {
-			var serviceNotFound *sertviceErrors.ServiceNotFoundByIDError
+			var serviceNotFound *serviceErrors.ServiceNotFoundByIDError
 
-			if errors.Is(err, serviceNotFound) {
-				http.Error(rw, err.Error(), http.StatusNoContent)
+			if errors.As(err, &serviceNotFound) {
+				http.Error(rw, serviceNotFound.Error(), http.StatusNoContent)
 				return
 			}
 
