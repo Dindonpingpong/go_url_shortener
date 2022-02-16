@@ -349,7 +349,7 @@ func getuserID(r *http.Request) (string, error) {
 		return "", err
 	}
 
-	if len(data) != 16 {
+	if len(data) < 16 {
 		return "", errors.New("decoded string is not correct")
 	}
 
