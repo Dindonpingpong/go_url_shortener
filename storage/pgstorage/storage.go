@@ -52,7 +52,7 @@ func (s *Storage) SaveShortedURL(ctx context.Context, url string, userID string,
 
 	_, err := s.db.ExecContext(ctx, query, userID, url, shortedURL)
 
-	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+	if errors.Is(err, pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 		return &storageErrors.StorageAlreadyExistsError{ShortURL: shortedURL}
 	}
 

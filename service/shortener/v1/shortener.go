@@ -46,7 +46,7 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userID string) (
 	if err != nil {
 		var storageAlreadyExistsError *storageErrors.StorageAlreadyExistsError
 
-		if errors.As(err, &storageAlreadyExistsError) {
+		if errors.Is(err, storageAlreadyExistsError) {
 			return shortURL, &sertviceErrors.ServiceAlreadyExistsError{Msg: err.Error()}
 		}
 
@@ -62,7 +62,7 @@ func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err erro
 	if err != nil {
 		var storageEmptyResultError *storageErrors.StorageEmptyResultError
 
-		if errors.As(err, &storageEmptyResultError) {
+		if errors.Is(err, storageEmptyResultError) {
 			return "", &sertviceErrors.ServiceNotFoundByIDError{ID: err.Error()}
 		}
 
@@ -78,7 +78,7 @@ func (s *Shortener) GetURLsByuserID(ctx context.Context, userID string) (urls []
 	if err != nil {
 		var storageEmptyResultError *storageErrors.StorageEmptyResultError
 
-		if errors.As(err, &storageEmptyResultError) {
+		if errors.Is(err, storageEmptyResultError) {
 			return nil, &sertviceErrors.ServiceNotFoundByIDError{ID: err.Error()}
 		}
 

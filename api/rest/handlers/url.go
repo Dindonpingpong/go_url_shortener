@@ -41,7 +41,7 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 		if err != nil {
 			var serviceNotFound *sertviceErrors.ServiceNotFoundByIDError
 
-			if errors.As(err, &serviceNotFound) {
+			if errors.Is(err, serviceNotFound) {
 				http.Error(rw, err.Error(), http.StatusNotFound)
 				return
 			}
@@ -78,7 +78,7 @@ func (h *URLHandler) HandlePostURL() http.HandlerFunc {
 		if err != nil {
 			var serviceAlreadyExistsError *sertviceErrors.ServiceAlreadyExistsError
 
-			if errors.As(err, &serviceAlreadyExistsError) {
+			if errors.Is(err, serviceAlreadyExistsError) {
 				u, err := createFullURL(h.serverConfig.BaseURL, id)
 
 				if err != nil {
@@ -142,7 +142,7 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 		if err != nil {
 			var serviceAlreadyExistsError *sertviceErrors.ServiceAlreadyExistsError
 
-			if errors.As(err, &serviceAlreadyExistsError) {
+			if errors.Is(err, serviceAlreadyExistsError) {
 				u, err := createFullURL(h.serverConfig.BaseURL, id)
 
 				if err != nil {
@@ -197,8 +197,6 @@ func (h *URLHandler) JSONHandlePostURL() http.HandlerFunc {
 
 func (h *URLHandler) HandleGetURLsByuserID() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		var responseURLs []restModel.ResponseFullURL
-
 		ctx := context.Background()
 		userID, err := getuserID(r)
 
@@ -212,7 +210,7 @@ func (h *URLHandler) HandleGetURLsByuserID() http.HandlerFunc {
 		if err != nil {
 			var serviceNotFound *sertviceErrors.ServiceNotFoundByIDError
 
-			if errors.As(err, &serviceNotFound) {
+			if errors.Is(err, serviceNotFound) {
 				http.Error(rw, err.Error(), http.StatusNoContent)
 				return
 			}
@@ -220,6 +218,8 @@ func (h *URLHandler) HandleGetURLsByuserID() http.HandlerFunc {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		responseURLs := make([]restModel.ResponseFullURL, 0)
 
 		for _, fullURL := range urls {
 			u, err := createFullURL(h.serverConfig.BaseURL, fullURL.ShortURL)
@@ -347,6 +347,10 @@ func getuserID(r *http.Request) (string, error) {
 
 	if err != nil {
 		return "", err
+	}
+
+	if len(data) != 16 {
+		return "", errors.New("decoded string is not correct")
 	}
 
 	userID := data[:16]
