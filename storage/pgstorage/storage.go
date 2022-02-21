@@ -49,6 +49,7 @@ func (s *Storage) GetURL(ctx context.Context, userID string, shortedURL string) 
 		log.Println("Not found in storage")
 		log.Println(userID)
 		log.Println(shortedURL)
+		log.Fatal(err)
 		return "", &storageErrors.StorageEmptyResultError{ID: shortedURL}
 	}
 
