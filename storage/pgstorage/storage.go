@@ -3,6 +3,7 @@ package pgstorage
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
 	serviceModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/model"
@@ -45,6 +46,9 @@ func (s *Storage) GetURL(ctx context.Context, userID string, shortedURL string) 
 	err := s.db.GetContext(ctx, &queryResult, query, shortedURL, userID)
 
 	if err != nil {
+		log.Println("Not found in storage")
+		log.Println(userID)
+		log.Println(shortedURL)
 		return "", &storageErrors.StorageEmptyResultError{ID: shortedURL}
 	}
 
