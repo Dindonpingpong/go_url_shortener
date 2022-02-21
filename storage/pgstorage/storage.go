@@ -48,7 +48,7 @@ func (s *Storage) GetURL(ctx context.Context, userID string, shortedURL string) 
 		return "", &storageErrors.StorageDeletedError{ShortURL: shortedURL}
 	} 
 
-	return url, err
+	return queryResult.URL, err
 }
 
 func (s *Storage) SaveShortedURL(ctx context.Context, url string, userID string, shortedURL string) error {
