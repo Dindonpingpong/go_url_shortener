@@ -36,7 +36,13 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 		urlID := chi.URLParam(r, "urlID")
 
 		ctx := context.Background()
-		url, err := h.svc.GetURL(ctx, urlID)
+		userID, err := getuserID(r)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		url, err := h.svc.GetURL(ctx, userID, urlID)
 
 		if err != nil {
 			var serviceNotFound *serviceErrors.ServiceNotFoundByIDError
@@ -44,6 +50,12 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 			if errors.As(err, &serviceNotFound) {
 				http.Error(rw, serviceNotFound.Error(), http.StatusNotFound)
 				return
+			}
+
+			var serviceURLDeleted *serviceErrors.ServiceEntityDeletedError
+
+			if errors.As(err, &serviceURLDeleted) {
+				http.Error(rw, serviceURLDeleted.Error(), http.StatusGone)
 			}
 
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -320,6 +332,40 @@ func (h *URLHandler) HandleBatchPostURLs() http.HandlerFunc {
 		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusCreated)
 		rw.Write(resBody)
+	}
+}
+
+func (h *URLHandler) HandleBatchDeleteURLs() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rContentType := r.Header.Get("Content-Type")
+
+		if rContentType != "application/json" {
+			http.Error(rw, "Invalid Content-Type", http.StatusBadRequest)
+			return
+		}
+
+		b, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		requestURLs := make([]string, 0)
+
+		json.Unmarshal(b, &requestURLs)
+
+		ctx := context.Background()
+		userID, err := getuserID(r)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		h.svc.DeleteBatchShortedURL(ctx, userID, requestURLs)
+		
+		rw.WriteHeader(http.StatusAccepted)
 	}
 }
 

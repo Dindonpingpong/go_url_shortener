@@ -11,7 +11,7 @@ type URLSaver interface {
 }
 
 type URLGetter interface {
-	GetURL(ctx context.Context, shortedURL string) (url string, err error)
+	GetURL(ctx context.Context, userID string, shortedURL string) (url string, err error)
 }
 
 type URLsByuserIDGetter interface {
@@ -21,6 +21,11 @@ type URLsByuserIDGetter interface {
 type URLsBatchSaver interface {
 	SaveBatchShortedURL(ctx context.Context, userID string, urls []serviceModel.FullURL) (err error)
 }
+
+type URLsBatchDeleter interface {
+	DeleteSoftBatchShortedURL(ctx context.Context, userID string, shortedURLs []string) error
+}
+
 type Persister interface {
 	PersistStorage() error
 }
@@ -37,6 +42,7 @@ type URLStorer interface {
 	URLGetter
 	URLsByuserIDGetter
 	URLsBatchSaver
+	URLsBatchDeleter
 	Persister
 	Pinger
 	Closer

@@ -37,10 +37,16 @@ func NewStorage(cfg *config.StorageConfig) (*Storage, error) {
 	return &Storage{db: db, Cfg: cfg}, nil
 }
 
-func (s *Storage) GetURL(ctx context.Context, shortedURL string) (url string, err error) {
-	query := "SELECT url FROM urls WHERE short_url = $1"
+func (s *Storage) GetURL(ctx context.Context, userID string, shortedURL string) (url string, err error) {
+	var queryResult pgModel.URLInDB
 
-	err = s.db.GetContext(ctx, &url, query, shortedURL)
+	query := "SELECT * FROM urls WHERE short_url = $1 AND user_id = $2"
+
+	err = s.db.GetContext(ctx, &queryResult, query, shortedURL)
+
+	if queryResult.IsDeleted {
+		return "", &storageErrors.StorageDeletedError{ShortURL: shortedURL}
+	} 
 
 	return url, err
 }
@@ -62,7 +68,7 @@ func (s *Storage) SaveShortedURL(ctx context.Context, url string, userID string,
 func (s *Storage) GetURLsByuserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error) {
 	var queryResult []pgModel.URLInDB
 
-	query := "SELECT * FROM urls WHERE user_id = $1"
+	query := "SELECT * FROM urls WHERE user_id = $1 AND is_deleted = false"
 
 	err = s.db.SelectContext(ctx, &queryResult, query, userID)
 
@@ -114,6 +120,33 @@ func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string, urls [
 	return tx.Commit()
 }
 
+func (s *Storage) DeleteSoftBatchShortedURL(ctx context.Context, userID string, shortedURLs []string) error {
+	var query = "UPDATE urls SET is_deleted = true WHERE user_id = $1 AND short_url = $2"
+
+	tx, err := s.db.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	for _, url := range shortedURLs {
+		_, err = tx.ExecContext(
+			ctx,
+			query,
+			userID,
+			url,
+		)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
 func (s *Storage) PersistStorage() error {
 	return nil
 }
@@ -131,6 +164,7 @@ func migrate(db *sqlx.DB) error {
 		id bigserial not null,
 		user_id uuid not null,
 		url text not null unique,
+		is_deleted boolean not null DEFAULT false,
 		short_url text not null unique 
 	);`
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/pkg/short"
@@ -56,14 +57,20 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userID string) (
 	return shortURL, nil
 }
 
-func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err error) {
-	url, err = s.urlStorer.GetURL(ctx, id)
+func (s *Shortener) GetURL(ctx context.Context, userID string, id string) (url string, err error) {
+	url, err = s.urlStorer.GetURL(ctx, userID, id)
 
 	if err != nil {
 		var storageEmptyResultError *storageErrors.StorageEmptyResultError
 
 		if errors.As(err, &storageEmptyResultError) {
 			return "", &serviceErrors.ServiceNotFoundByIDError{ID: storageEmptyResultError.Error()}
+		}
+
+		var storageDeletedError *storageErrors.StorageDeletedError
+
+		if errors.As(err, &storageEmptyResultError) {
+			return "", &serviceErrors.ServiceEntityDeletedError{Msg: storageDeletedError.Error()}
 		}
 
 		return "", err
@@ -113,6 +120,28 @@ func (s *Shortener) SaveBatchShortedURL(ctx context.Context, userID string, urls
 	err = s.urlStorer.SaveBatchShortedURL(ctx, userID, savedUrls)
 
 	return savedUrls, err
+}
+
+func (s *Shortener) DeleteBatchShortedURL(ctx context.Context, userID string, shortedURLs[]string) {
+	const batchSize = 50
+
+	maxSize := len(shortedURLs)
+
+	for start := 0; start < maxSize; start += batchSize {
+		end := start + batchSize
+
+		if end > maxSize {
+			end = maxSize
+		}
+
+		go func(urlsToDelete []string) {
+			err := s.urlStorer.DeleteSoftBatchShortedURL(ctx, userID, urlsToDelete)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+		}(shortedURLs[start:end])
+	}
 }
 
 func (s *Shortener) PingStorage() error {

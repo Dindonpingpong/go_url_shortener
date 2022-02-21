@@ -5,9 +5,9 @@ import (
 	"sync"
 
 	serviceModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/model"
-	storageModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/model"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage"
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/errors"
+	storageModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/storage/model"
 )
 
 var _ storage.URLStorer = (*Storage)(nil)
@@ -23,7 +23,7 @@ func NewStorage() *Storage {
 	return &Storage{DB: db}
 }
 
-func (s *Storage) GetURL(ctx context.Context, shortedURL string) (url string, err error) {
+func (s *Storage) GetURL(ctx context.Context, userID string, shortedURL string) (url string, err error) {
 	s.mu.Lock()
 	urlInDB, ok := s.DB[shortedURL]
 
@@ -81,6 +81,10 @@ func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string, urls [
 
 	s.mu.Unlock()
 
+	return nil
+}
+
+func (s *Storage) DeleteSoftBatchShortedURL(ctx context.Context, userID string, shortedURLs []string) error {
 	return nil
 }
 
