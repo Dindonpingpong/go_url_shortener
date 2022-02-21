@@ -38,18 +38,16 @@ func NewStorage(cfg *config.StorageConfig) (*Storage, error) {
 	return &Storage{db: db, Cfg: cfg}, nil
 }
 
-func (s *Storage) GetURL(ctx context.Context, userID string, shortedURL string) (string, error) {
+func (s *Storage) GetURL(ctx context.Context, shortedURL string) (string, error) {
 	var queryResult pgModel.URLInDB
 
-	query := "SELECT * FROM urls WHERE short_url = $1 AND user_id = $2"
+	query := "SELECT * FROM urls WHERE short_url = $1"
 
-	err := s.db.GetContext(ctx, &queryResult, query, shortedURL, userID)
+	err := s.db.GetContext(ctx, &queryResult, query, shortedURL)
 
 	if err != nil {
 		log.Println("Not found in storage")
-		log.Println(userID)
 		log.Println(shortedURL)
-		log.Fatal(err)
 		return "", &storageErrors.StorageEmptyResultError{ID: shortedURL}
 	}
 

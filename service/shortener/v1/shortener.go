@@ -57,8 +57,8 @@ func (s *Shortener) SaveURL(ctx context.Context, rawURL string, userID string) (
 	return shortURL, nil
 }
 
-func (s *Shortener) GetURL(ctx context.Context, userID string, id string) (url string, err error) {
-	url, err = s.urlStorer.GetURL(ctx, userID, id)
+func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err error) {
+	url, err = s.urlStorer.GetURL(ctx, id)
 
 	if err != nil {
 		var storageEmptyResultError *storageErrors.StorageEmptyResultError

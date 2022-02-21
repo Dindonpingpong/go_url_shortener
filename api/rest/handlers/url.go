@@ -37,15 +37,7 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 		urlID := chi.URLParam(r, "urlID")
 
 		ctx := context.Background()
-		userID, err := getuserID(r)
-
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			log.Printf("cannot get userid")
-			log.Fatal(err)
-			return
-		}
-		url, err := h.svc.GetURL(ctx, userID, urlID)
+		url, err := h.svc.GetURL(ctx, urlID)
 
 		if err != nil {
 			var serviceNotFound *serviceErrors.ServiceNotFoundByIDError
