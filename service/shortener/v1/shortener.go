@@ -69,7 +69,7 @@ func (s *Shortener) GetURL(ctx context.Context, userID string, id string) (url s
 
 		var storageDeletedError *storageErrors.StorageDeletedError
 
-		if errors.As(err, &storageEmptyResultError) {
+		if errors.As(err, &storageDeletedError) {
 			return "", &serviceErrors.ServiceEntityDeletedError{Msg: storageDeletedError.Error()}
 		}
 

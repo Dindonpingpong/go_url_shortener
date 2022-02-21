@@ -56,6 +56,7 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 
 			if errors.As(err, &serviceURLDeleted) {
 				http.Error(rw, serviceURLDeleted.Error(), http.StatusGone)
+				return
 			}
 
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -364,7 +365,7 @@ func (h *URLHandler) HandleBatchDeleteURLs() http.HandlerFunc {
 		}
 
 		h.svc.DeleteBatchShortedURL(ctx, userID, requestURLs)
-		
+
 		rw.WriteHeader(http.StatusAccepted)
 	}
 }
