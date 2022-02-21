@@ -42,7 +42,7 @@ func (s *Storage) GetURL(ctx context.Context, userID string, shortedURL string) 
 
 	query := "SELECT * FROM urls WHERE short_url = $1 AND user_id = $2"
 
-	err = s.db.GetContext(ctx, &queryResult, query, shortedURL)
+	err = s.db.GetContext(ctx, &queryResult, query, shortedURL, userID)
 
 	if queryResult.IsDeleted {
 		return "", &storageErrors.StorageDeletedError{ShortURL: shortedURL}
