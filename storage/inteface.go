@@ -11,7 +11,7 @@ type URLSaver interface {
 }
 
 type URLGetter interface {
-	GetURL(ctx context.Context, userID string, shortedURL string) (url string, err error)
+	GetURL(ctx context.Context, userID string, shortedURL string) (string, error)
 }
 
 type URLsByuserIDGetter interface {

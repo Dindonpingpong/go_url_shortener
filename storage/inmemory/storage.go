@@ -23,7 +23,7 @@ func NewStorage() *Storage {
 	return &Storage{DB: db}
 }
 
-func (s *Storage) GetURL(ctx context.Context, userID string, shortedURL string) (url string, err error) {
+func (s *Storage) GetURL(ctx context.Context, userID string, shortedURL string) (string, error) {
 	s.mu.Lock()
 	urlInDB, ok := s.DB[shortedURL]
 
