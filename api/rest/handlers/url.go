@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -40,6 +41,8 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			log.Printf("cannot get userid")
+			log.Fatal(err)
 			return
 		}
 		url, err := h.svc.GetURL(ctx, userID, urlID)
@@ -60,6 +63,8 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 			}
 
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			log.Printf("unknown error from service")
+			log.Fatal(err)
 			return
 		}
 
