@@ -50,7 +50,7 @@ func InitServer(ctx context.Context, cfg *config.Config, st storage.URLStorer) (
 	r.Post("/api/shorten", urlHandler.JSONHandlePostURL())
 	r.Post("/", urlHandler.HandlePostURL())
 	r.Post("/api/shorten/batch", urlHandler.HandleBatchPostURLs())
-	r.Delete("/api/user/urls", urlHandler.HandleGetURLsByuserID())
+	r.Delete("/api/user/urls", urlHandler.HandleBatchDeleteURLs())
 
 	return &http.Server{
 		Addr:    cfg.ServerConfig.ServerAddress,
