@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -55,8 +54,6 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 			}
 
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			log.Printf("unknown error from service")
-			log.Fatal(err)
 			return
 		}
 
