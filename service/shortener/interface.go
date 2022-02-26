@@ -11,5 +11,6 @@ type Processor interface {
 	GetURL(ctx context.Context, id string) (url string, err error)
 	GetURLsByuserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error)
 	SaveBatchShortedURL(ctx context.Context, userID string, urls []string) (savedUrls []serviceModel.FullURL, err error)
+	DeleteBatchShortedURL(ctx context.Context, userID string, shortedURLs[]string)
 	PingStorage() error
 }

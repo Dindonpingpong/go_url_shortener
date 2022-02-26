@@ -3,6 +3,7 @@ package pgstorage
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
 	serviceModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/model"
@@ -37,12 +38,22 @@ func NewStorage(cfg *config.StorageConfig) (*Storage, error) {
 	return &Storage{db: db, Cfg: cfg}, nil
 }
 
-func (s *Storage) GetURL(ctx context.Context, shortedURL string) (url string, err error) {
-	query := "SELECT url FROM urls WHERE short_url = $1"
+func (s *Storage) GetURL(ctx context.Context, shortedURL string) (string, error) {
+	var queryResult pgModel.URLInDB
 
-	err = s.db.GetContext(ctx, &url, query, shortedURL)
+	query := "SELECT * FROM urls WHERE short_url = $1"
 
-	return url, err
+	err := s.db.GetContext(ctx, &queryResult, query, shortedURL)
+
+	if err != nil {
+		return "", &storageErrors.StorageEmptyResultError{ID: shortedURL}
+	}
+
+	if queryResult.IsDeleted {
+		return "", &storageErrors.StorageDeletedError{ShortURL: shortedURL}
+	}
+
+	return queryResult.URL, err
 }
 
 func (s *Storage) SaveShortedURL(ctx context.Context, url string, userID string, shortedURL string) error {
@@ -62,7 +73,7 @@ func (s *Storage) SaveShortedURL(ctx context.Context, url string, userID string,
 func (s *Storage) GetURLsByuserID(ctx context.Context, userID string) (urls []serviceModel.FullURL, err error) {
 	var queryResult []pgModel.URLInDB
 
-	query := "SELECT * FROM urls WHERE user_id = $1"
+	query := "SELECT * FROM urls WHERE user_id = $1 AND is_deleted = false"
 
 	err = s.db.SelectContext(ctx, &queryResult, query, userID)
 
@@ -114,6 +125,31 @@ func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string, urls [
 	return tx.Commit()
 }
 
+func (s *Storage) DeleteSoftBatchShortedURL(ctx context.Context, userID string, shortedURLs []string) error {
+	var query = "UPDATE urls SET is_deleted = true WHERE user_id = $1 AND short_url = ANY($2)"
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	log.Println(shortedURLs)
+	_, err = tx.ExecContext(
+		ctx,
+		query,
+		userID,
+		pq.Array(shortedURLs),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func (s *Storage) PersistStorage() error {
 	return nil
 }
@@ -131,6 +167,7 @@ func migrate(db *sqlx.DB) error {
 		id bigserial not null,
 		user_id uuid not null,
 		url text not null unique,
+		is_deleted boolean not null DEFAULT false,
 		short_url text not null unique 
 	);`
 

@@ -46,6 +46,13 @@ func (h *URLHandler) HandleGetURL() http.HandlerFunc {
 				return
 			}
 
+			var serviceURLDeleted *serviceErrors.ServiceEntityDeletedError
+
+			if errors.As(err, &serviceURLDeleted) {
+				http.Error(rw, serviceURLDeleted.Error(), http.StatusGone)
+				return
+			}
+
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -320,6 +327,40 @@ func (h *URLHandler) HandleBatchPostURLs() http.HandlerFunc {
 		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusCreated)
 		rw.Write(resBody)
+	}
+}
+
+func (h *URLHandler) HandleBatchDeleteURLs() http.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		rContentType := r.Header.Get("Content-Type")
+
+		if rContentType != "application/json" {
+			http.Error(rw, "Invalid Content-Type", http.StatusBadRequest)
+			return
+		}
+
+		b, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		requestURLs := make([]string, 0)
+
+		json.Unmarshal(b, &requestURLs)
+
+		ctx := context.Background()
+		userID, err := getuserID(r)
+
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		h.svc.DeleteBatchShortedURL(ctx, userID, requestURLs)
+
+		rw.WriteHeader(http.StatusAccepted)
 	}
 }
 

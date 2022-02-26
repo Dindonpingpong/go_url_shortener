@@ -35,7 +35,7 @@ func NewStorage(Cfg *config.StorageConfig) (*Storage, error) {
 	return &st, err
 }
 
-func (s *Storage) GetURL(ctx context.Context, shortedURL string) (url string, err error) {
+func (s *Storage) GetURL(ctx context.Context, shortedURL string) (string, error)  {
 	s.mu.Lock()
 	urlInDB, ok := s.DB[shortedURL]
 
@@ -93,6 +93,10 @@ func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string, urls [
 
 	s.mu.Unlock()
 
+	return nil
+}
+
+func (s *Storage) DeleteSoftBatchShortedURL(ctx context.Context, userID string, shortedURLs []string) error {
 	return nil
 }
 

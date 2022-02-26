@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/pkg/short"
@@ -66,6 +67,12 @@ func (s *Shortener) GetURL(ctx context.Context, id string) (url string, err erro
 			return "", &serviceErrors.ServiceNotFoundByIDError{ID: storageEmptyResultError.Error()}
 		}
 
+		var storageDeletedError *storageErrors.StorageDeletedError
+
+		if errors.As(err, &storageDeletedError) {
+			return "", &serviceErrors.ServiceEntityDeletedError{Msg: storageDeletedError.Error()}
+		}
+
 		return "", err
 	}
 
@@ -113,6 +120,17 @@ func (s *Shortener) SaveBatchShortedURL(ctx context.Context, userID string, urls
 	err = s.urlStorer.SaveBatchShortedURL(ctx, userID, savedUrls)
 
 	return savedUrls, err
+}
+
+func (s *Shortener) DeleteBatchShortedURL(ctx context.Context, userID string, shortedURLs []string) {
+	go func() {
+		err := s.urlStorer.DeleteSoftBatchShortedURL(ctx, userID, shortedURLs)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 }
 
 func (s *Shortener) PingStorage() error {

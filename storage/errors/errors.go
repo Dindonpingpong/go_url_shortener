@@ -12,6 +12,10 @@ type(
 	StorageAlreadyExistsError struct{
 		ShortURL string
 	}
+
+	StorageDeletedError struct{
+		ShortURL string
+	}
 )
 
 func (e *StorageEmptyResultError) Error() string {
@@ -20,4 +24,8 @@ func (e *StorageEmptyResultError) Error() string {
 
 func (e *StorageAlreadyExistsError) Error() string {
 	return fmt.Sprintf("%s already exists", e.ShortURL)
+}
+
+func (e *StorageDeletedError) Error() string {
+	return fmt.Sprintf("%s is deleted", e.ShortURL)
 }
