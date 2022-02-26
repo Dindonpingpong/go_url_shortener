@@ -122,26 +122,15 @@ func (s *Shortener) SaveBatchShortedURL(ctx context.Context, userID string, urls
 	return savedUrls, err
 }
 
-func (s *Shortener) DeleteBatchShortedURL(ctx context.Context, userID string, shortedURLs[]string) {
-	const batchSize = 50
+func (s *Shortener) DeleteBatchShortedURL(ctx context.Context, userID string, shortedURLs []string) {
+	go func() {
+		err := s.urlStorer.DeleteSoftBatchShortedURL(ctx, userID, shortedURLs)
 
-	maxSize := len(shortedURLs)
-
-	for start := 0; start < maxSize; start += batchSize {
-		end := start + batchSize
-
-		if end > maxSize {
-			end = maxSize
+		if err != nil {
+			log.Fatal(err)
 		}
+	}()
 
-		go func(urlsToDelete []string) {
-			err := s.urlStorer.DeleteSoftBatchShortedURL(ctx, userID, urlsToDelete)
-
-			if err != nil {
-				log.Fatal(err)
-			}
-		}(shortedURLs[start:end])
-	}
 }
 
 func (s *Shortener) PingStorage() error {

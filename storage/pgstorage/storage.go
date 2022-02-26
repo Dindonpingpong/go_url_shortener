@@ -3,6 +3,7 @@ package pgstorage
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/config"
 	serviceModel "github.com/Dindonpingpong/yandex_practicum_go_url_shortener_service/service/model"
@@ -125,27 +126,25 @@ func (s *Storage) SaveBatchShortedURL(ctx context.Context, userID string, urls [
 }
 
 func (s *Storage) DeleteSoftBatchShortedURL(ctx context.Context, userID string, shortedURLs []string) error {
-	var query = "UPDATE urls SET is_deleted = true WHERE user_id = $1 AND short_url = $2"
+	var query = "UPDATE urls SET is_deleted = true WHERE user_id = $1 AND short_url = ANY($2)"
 
 	tx, err := s.db.Begin()
-
 	if err != nil {
 		return err
 	}
 
 	defer tx.Rollback()
 
-	for _, url := range shortedURLs {
-		_, err = tx.ExecContext(
-			ctx,
-			query,
-			userID,
-			url,
-		)
+	log.Println(shortedURLs)
+	_, err = tx.ExecContext(
+		ctx,
+		query,
+		userID,
+		pq.Array(shortedURLs),
+	)
 
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit()
